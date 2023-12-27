@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 type User struct {
@@ -41,16 +41,29 @@ var (
 	dbname   = os.Getenv("POSTGRES_DB")
 )
 
+const (
+	FindUserByIDQuery = "SELECT * FROM users WHERE id=$1"
+	addProductQuery   = "INSERT INTO products (user_id, product_name, product_description, product_images, product_price) VALUES ($1, $2, $3, $4, $5) RETURNING product_id"
+)
+
 func Connect() (err error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	db, err = sql.Open("postgres", psqlInfo)
-	return
+	if err != nil {
+		return err
+	}
+	return db.Ping()
 }
 
 func userExists(userID int64) bool {
-	return true
+	_, err := db.Exec(FindUserByIDQuery, userID)
+	return err == nil
 }
 
-func addProduct(product Product) error {
-	return nil
+func addProduct(product Product) (productID int, err error) {
+	err = db.QueryRow(addProductQuery, product.UserID, product.ProductName, product.ProductDescription, pq.Array(product.ProductImages), product.ProductPrice).Scan(&productID)
+	if err != nil {
+		return 0, err
+	}
+	return productID, nil
 }

@@ -14,6 +14,7 @@ func main() {
 	if err := Connect(); err != nil {
 		panic(err)
 	}
+	defer db.Close()
 	fmt.Println("Server listening on: http://127.0.0.1:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
@@ -44,13 +45,19 @@ func AddProducts(w http.ResponseWriter, r *http.Request) {
 				errorMessages[i] = err.Error()
 			}
 			http.Error(w, fmt.Sprintf("Invalid product: %s", errorMessages), http.StatusBadRequest)
+			return
 		}
-		if err := addProduct(product); err != nil {
+		if _, err := addProduct(product); err != nil {
 			http.Error(w, "Unable to add the product", http.StatusInternalServerError)
 			return
 		}
+		// return a response
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Product added successfully"))
+		return
 	default:
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
 	}
 }
 

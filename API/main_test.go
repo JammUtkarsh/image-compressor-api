@@ -51,6 +51,8 @@ func Test_validImageURL(t *testing.T) {
 func TestAddProducts(t *testing.T) {
 	// Create a mock for the addProduct function
 	addProductCalled := false
+	// This is a temporary fix, it need to be replaced with an mock database later
+	Connect()
 
 	// Create a test server with the AddProducts handler and mocked addProduct
 	testServer := httptest.NewServer(http.HandlerFunc(AddProducts))
@@ -69,7 +71,7 @@ func TestAddProducts(t *testing.T) {
 			name:          "Successful product addition",
 			method:        "POST",
 			path:          "/",
-			body:          []byte(`{"user_id":1234,"product_name":"Cool Gadget","product_description":"This gadget is super cool and does amazing things!","product_images":["https://example.com/image1.jpg","https://example.com/image2.png"],"product_price":49.99}`),
+			body:          []byte(`{"user_id":1,"product_name":"Cool Gadget","product_description":"This gadget is super cool and does amazing things!","product_images":["https://example.com/image1.jpg","https://example.com/image2.png"],"product_price":49.99}`),
 			expectedCode:  http.StatusOK,
 			expectedError: "",
 		},
@@ -101,7 +103,7 @@ func TestAddProducts(t *testing.T) {
 			name:          "Invalid URL",
 			method:        "POST",
 			path:          "/",
-			body:          []byte(`{"user_id":1234,"product_name":"Cool Gadget", "product_images":["invalid-url", "/path/to/something"],"product_price":49.99}`),
+			body:          []byte(`{"user_id":1,"product_name":"Cool Gadget", "product_images":["invalid-url", "/path/to/something"],"product_price":49.99}`),
 			expectedCode:  http.StatusBadRequest,
 			expectedError: "Invalid product: [product images must be valid URLs]\n",
 		},
@@ -109,7 +111,7 @@ func TestAddProducts(t *testing.T) {
 			name:          "Negative price",
 			method:        "POST",
 			path:          "/",
-			body:          []byte(`{"user_id":1234,"product_name":"Cool Gadget", "product_images":[],"product_price":-49.99}`),
+			body:          []byte(`{"user_id":1,"product_name":"Cool Gadget", "product_images":[],"product_price":-49.99}`),
 			expectedCode:  http.StatusBadRequest,
 			expectedError: "Invalid product: [product price cannot be negative]\n",
 		},
@@ -117,7 +119,7 @@ func TestAddProducts(t *testing.T) {
 			name:          "Empty name",
 			method:        "POST",
 			path:          "/",
-			body:          []byte(`{"user_id":1234,"product_name":"", "product_images":[],"product_price":49.99}`),
+			body:          []byte(`{"user_id":1,"product_name":"", "product_images":[],"product_price":49.99}`),
 			expectedCode:  http.StatusBadRequest,
 			expectedError: "Invalid product: [product name cannot be empty]\n",
 		},
@@ -125,7 +127,7 @@ func TestAddProducts(t *testing.T) {
 			name:          "Invalid Path",
 			method:        "POST",
 			path:          "/invalid-path",
-			body:          []byte(`{"user_id":1234,"product_name":"Cool Gadget", "product_images":[],"product_price":49.99}`),
+			body:          []byte(`{"user_id":1,"product_name":"Cool Gadget", "product_images":[],"product_price":49.99}`),
 			expectedCode:  http.StatusNotFound,
 			expectedError: "404 not found.\n",
 		},
