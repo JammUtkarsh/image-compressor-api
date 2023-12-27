@@ -15,3 +15,5 @@ FROM golang:1.16 AS final
 WORKDIR /app
 COPY --from=build /app/myapp .
 CMD ["./myapp"]
+
+EXPOSE 8080
