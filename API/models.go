@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 type User struct {

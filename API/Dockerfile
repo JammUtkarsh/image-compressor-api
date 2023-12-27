@@ -1,7 +1,7 @@
 # Stage 1: Test the code
 FROM golang:1.16 AS test
 WORKDIR /app
-COPY . .
+COPY ./API . 
 RUN go test ./...
 
 # Stage 2: Build the code
@@ -17,3 +17,6 @@ COPY --from=build /app/myapp .
 CMD ["./myapp"]
 
 EXPOSE 8080
+
+
+# TODO: Move this file to the root of the project and add other microservices containers too

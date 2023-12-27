@@ -47,3 +47,7 @@ CREATE TRIGGER products_updated_at_trigger
 BEFORE UPDATE ON Products
 FOR EACH ROW
 EXECUTE FUNCTION update_products_updated_at();
+
+
+-- Insert a user
+INSERT INTO Users (name, mobile, latitude, longitude) VALUES ('Admin', '1234567890', 12.9716, 77.5946);

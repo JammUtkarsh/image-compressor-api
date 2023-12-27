@@ -1,3 +1,5 @@
+-- To show triggers in action
+
 -- Inserting users
 INSERT INTO Users (name, mobile, latitude, longitude)
 VALUES ('John Doe', '1234567890', 40.7128, -74.0060),
