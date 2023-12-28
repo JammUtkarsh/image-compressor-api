@@ -39,3 +39,4 @@ services:
       - ./minio/data:/data
     ports:
       - 9000:9000
+      - 9001:9001
