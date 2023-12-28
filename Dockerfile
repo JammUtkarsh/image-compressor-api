@@ -18,5 +18,3 @@ COPY --from=build /app/myapp .
 CMD ["./myapp"]
 EXPOSE 8080
 
-
-# TODO: Move this file to the root of the project and add other microservices containers too
