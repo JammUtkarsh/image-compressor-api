@@ -49,10 +49,11 @@ func Test_validImageURL(t *testing.T) {
 }
 
 func TestAddProducts(t *testing.T) {
-	// Create a mock for the addProduct function
-	addProductCalled := false
 	// This is a temporary fix, it need to be replaced with an mock database later
-	Connect()
+	if err := Connect(); err != nil {
+		panic(err)
+	}
+	defer db.Close()
 
 	// Create a test server with the AddProducts handler and mocked addProduct
 	testServer := httptest.NewServer(http.HandlerFunc(AddProducts))
@@ -154,15 +155,11 @@ func TestAddProducts(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+				
 				if string(body) != tc.expectedError {
 					t.Errorf("Expected error message %q, got %q", tc.expectedError, string(body))
 				}
-			} else {
-				addProductCalled = true
 			}
 		})
-		if !addProductCalled {
-			t.Errorf("addProduct was not called for test case %q", tc.name)
-		}
 	}
 }
