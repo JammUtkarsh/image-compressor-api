@@ -1,25 +1,36 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"net/url"
+	"strings"
 )
 
+type api struct {
+	db *sql.DB
+}
+
 func main() {
+	db, err := Connect()
+	if err != nil {
+		panic(err)
+	}
 	defer db.Close()
+	a := api{db: db}
+
 	log.Println("Server listening on: http://127.0.0.1:8080")
-	http.HandleFunc("/", AddProducts)
+	http.HandleFunc("/", a.AddProducts)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}
 }
 
-func AddProducts(w http.ResponseWriter, r *http.Request) {
+func (a *api) AddProducts(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.Error(w, "404 not found.", http.StatusNotFound)
 		return
@@ -37,7 +48,7 @@ func AddProducts(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
-		if errs := basicProductChecks(product); errs != nil {
+		if errs := a.basicProductChecks(product); errs != nil {
 			errorMessages := make([]string, len(errs))
 			for i, err := range errs {
 				errorMessages[i] = err.Error()
@@ -45,7 +56,11 @@ func AddProducts(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Invalid product: %s", errorMessages), http.StatusBadRequest)
 			return
 		}
-		if _, err := addProduct(product); err != nil {
+		if err != nil {
+			http.Error(w, "Unable to connect to database", http.StatusInternalServerError)
+			return
+		}
+		if _, err := addProduct(a.db, product); err != nil {
 			http.Error(w, "Unable to add the product", http.StatusInternalServerError)
 			return
 		}
@@ -59,10 +74,9 @@ func AddProducts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func basicProductChecks(product Product) []error {
-	var validationErrors []error
+func (a *api) basicProductChecks(product Product) (validationErrors []error) {
 	switch {
-	case !userExists(product.UserID) || product.UserID == 0:
+	case !userExists(a.db, product.UserID) || product.UserID == 0:
 		validationErrors = append(validationErrors, fmt.Errorf("user %d does not exist", product.UserID))
 	case product.ProductName == "":
 		validationErrors = append(validationErrors, errors.New("product name cannot be empty"))
@@ -81,8 +95,7 @@ func basicProductChecks(product Product) []error {
 
 func validURLs(urls []string) bool {
 	for _, urlString := range urls {
-		_, err := url.ParseRequestURI(urlString)
-		if err != nil {
+		if !strings.HasPrefix(urlString, "http") {
 			return false
 		}
 	}

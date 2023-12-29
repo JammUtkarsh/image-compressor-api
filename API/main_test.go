@@ -26,10 +26,16 @@ func Test_validImageURL(t *testing.T) {
 		{
 			name: "invalid urls",
 			urls: []string{
-				"https://example.com/image1.jpg",
-				"https://example.com/image2.jpg",
-				"https://example.com/image3.jpg",
 				"invalid-url",
+				"https://example.com/image2.jpg",
+			},
+			want: false,
+		},
+		{
+			name: "Some Absolute Path",
+			urls: []string{
+				"/path/to/something",
+				"https://example.com/image2.jpg",
 			},
 			want: false,
 		},
@@ -49,17 +55,16 @@ func Test_validImageURL(t *testing.T) {
 }
 
 func TestAddProducts(t *testing.T) {
-	// This is a temporary fix, it need to be replaced with an mock database later
-	if err := Connect(); err != nil {
-		panic(err)
+	db, err := Connect()
+	if err != nil {
+		t.Fatal(err)
 	}
 	defer db.Close()
+	a := api{db: db}
 
-	// Create a test server with the AddProducts handler and mocked addProduct
-	testServer := httptest.NewServer(http.HandlerFunc(AddProducts))
+	testServer := httptest.NewServer(http.HandlerFunc(a.AddProducts))
 	defer testServer.Close()
 
-	// Test cases for various scenarios
 	testCases := []struct {
 		name          string
 		method        string
@@ -72,7 +77,7 @@ func TestAddProducts(t *testing.T) {
 			name:          "Successful product addition",
 			method:        "POST",
 			path:          "/",
-			body:          []byte(`{"user_id":1,"product_name":"Cool Gadget","product_description":"This gadget is super cool and does amazing things!","product_images":["https://example.com/image1.jpg","https://example.com/image2.png"],"product_price":49.99}`),
+			body:          []byte(`{"user_id":1,"product_name":"Mobile","product_description":"Samsung Fold 5", "product_images":["https://example.com/image1.jpg","https://example.com/image2.png"],"product_price":49.99}`),
 			expectedCode:  http.StatusOK,
 			expectedError: "",
 		},
@@ -155,7 +160,7 @@ func TestAddProducts(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				
+
 				if string(body) != tc.expectedError {
 					t.Errorf("Expected error message %q, got %q", tc.expectedError, string(body))
 				}

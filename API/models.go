@@ -32,8 +32,6 @@ type Product struct {
 	UpdatedAt               time.Time `json:"updated_at" db:"updated_at"`
 }
 
-var db *sql.DB
-
 var (
 	port     = 5432
 	host     = os.Getenv("POSTGRES_HOST")
@@ -49,18 +47,18 @@ const (
 
 // The Connect function establishes a connection to a PostgreSQL database and retries up to 5 times if
 // the initial connection fails.
-func Connect() (err error) {
+func Connect() (db *sql.DB, err error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
-		return err
+		return 
 	}
 	for i := 0; i < 5; i++ {
 		if err = db.Ping(); err != nil {
 			log.Println("failed to connect to database, retrying...")
 			time.Sleep(6 * time.Second)
 		} else {
-			return nil
+			return
 		}
 	}
 	if err != nil {
@@ -70,12 +68,12 @@ func Connect() (err error) {
 	return
 }
 
-func userExists(userID int64) bool {
+func userExists(db *sql.DB, userID int64) bool {
 	_, err := db.Exec(FindUserByIDQuery, userID)
 	return err == nil
 }
 
-func addProduct(product Product) (productID int, err error) {
+func addProduct(db *sql.DB, product Product) (productID int, err error) {
 	err = db.QueryRow(addProductQuery, product.UserID, product.ProductName, product.ProductDescription, pq.Array(product.ProductImages), product.ProductPrice).Scan(&productID)
 	if err != nil {
 		return 0, err
