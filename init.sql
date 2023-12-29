@@ -1,12 +1,11 @@
---- USERS
 CREATE TABLE Users (
-	id SERIAL PRIMARY KEY,
-	name VARCHAR(255),
-	mobile VARCHAR(20),
-	latitude FLOAT,
-	longitude FLOAT,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id bigserial PRIMARY KEY,
+  name varchar NOT NULL,
+  mobile varchar,
+  latitude float,
+  longitude float,
+  created_at timestamptz NOT NULL DEFAULT (now()),
+  updated_at timestamptz NOT NULL DEFAULT (now())
 );
 
 CREATE OR REPLACE FUNCTION update_users_updated_at()
@@ -22,17 +21,16 @@ BEFORE UPDATE ON Users
 FOR EACH ROW
 EXECUTE FUNCTION update_users_updated_at();
 
---- PRODUCTS
 CREATE TABLE Products (
-	product_id SERIAL PRIMARY KEY,
-	user_id INT REFERENCES Users(id),
-	product_name VARCHAR(255),
-	product_description TEXT,
-	product_images TEXT [],
-	product_price NUMERIC,
-	compressed_product_images TEXT [],
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id bigserial PRIMARY KEY,
+  user_id bigint REFERENCES Users(id),
+  product_name varchar NOT NULL,
+  product_description text NOT NULL,
+  product_price real NOT NULL,
+  product_images text[],
+  compressed_product_images text[],
+  created_at timestamptz NOT NULL DEFAULT (now()),
+  updated_at timestamptz NOT NULL DEFAULT (now())
 );
 
 CREATE OR REPLACE FUNCTION update_products_updated_at()
@@ -48,6 +46,17 @@ BEFORE UPDATE ON Products
 FOR EACH ROW
 EXECUTE FUNCTION update_products_updated_at();
 
+-- Indexes were pushed at the bottom of the file to avoid: ERROR: relation "Users" does not exist
+CREATE INDEX ON Users (id);
+
+CREATE INDEX ON Products (id);
+
+CREATE INDEX ON Products (user_id);
+
+CREATE INDEX ON Products (user_id, id);
 
 -- Insert a user
-INSERT INTO Users (name, mobile, latitude, longitude) VALUES ('Admin', '1234567890', 12.9716, 77.5946);
+INSERT INTO
+  Users (name, mobile, latitude, longitude)
+VALUES
+  ('admin', '1234567890', 0, 0);
