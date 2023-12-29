@@ -11,18 +11,6 @@ services:
     ports:
       - 5432:5432
 
-  minio:
-    image: minio/minio:latest
-    restart: always
-    command: ["server", "/data", "--console-address", ":9001"]
-    env_file:
-      - .env
-    volumes:
-      - minio-data:/data
-    ports:
-      - 9000:9000
-      - 9001:9001
-
   api:
     build:
       context: .
@@ -38,6 +26,13 @@ services:
     ports:
       - 8080:8080
 
+  img:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: img-final
+    restart: always
+    ports:
+      - 7070:7070
 volumes:
   postgres-data:
-  minio-data:
