@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -42,17 +43,31 @@ var (
 )
 
 const (
-	FindUserByIDQuery = "SELECT * FROM users WHERE id=$1"
-	addProductQuery   = "INSERT INTO products (user_id, product_name, product_description, product_images, product_price) VALUES ($1, $2, $3, $4, $5) RETURNING product_id"
+	FindUserByIDQuery = "SELECT * FROM Users WHERE id=$1"
+	addProductQuery   = "INSERT INTO Products (user_id, product_name, product_description, product_images, product_price) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 )
 
+// The Connect function establishes a connection to a PostgreSQL database and retries up to 5 times if
+// the initial connection fails.
 func Connect() (err error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
 		return err
 	}
-	return db.Ping()
+	for i := 0; i < 5; i++ {
+		if err = db.Ping(); err != nil {
+			log.Println("failed to connect to database, retrying...")
+			time.Sleep(6 * time.Second)
+		} else {
+			return nil
+		}
+	}
+	if err != nil {
+		fmt.Println("failed to connect to database")
+		os.Exit(1)
+	}
+	return
 }
 
 func userExists(userID int64) bool {

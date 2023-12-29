@@ -8,33 +8,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
-	"time"
 )
 
 func main() {
-	// When Docker compose is run, it usually takes a few seconds for the database to be ready.
-	// This loop will try to connect to the database every 6 seconds for 5 times. i,e 30 seconds.
-	// If it fails to connect, it will exit.
-	// The restart policy in the docker compose file will restart the container and try again.
-	var err error
-	for i := 0; i < 5; i++ {
-		if err = Connect(); err != nil {
-			log.Println("failed to connect to database, retrying...")
-			time.Sleep(6 * time.Second)
-		} else {
-			break
-		}
-	}
-	if err != nil {
-		fmt.Println("failed to connect to database")
-		os.Exit(1)
-	}
 	defer db.Close()
-
 	log.Println("Server listening on: http://127.0.0.1:8080")
 	http.HandleFunc("/", AddProducts)
-	if err = http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}
 }
