@@ -51,7 +51,7 @@ func Connect() (db *sql.DB, err error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
-		return 
+		return
 	}
 	for i := 0; i < 5; i++ {
 		if err = db.Ping(); err != nil {
@@ -62,7 +62,7 @@ func Connect() (db *sql.DB, err error) {
 		}
 	}
 	if err != nil {
-		fmt.Println("failed to connect to database")
+		log.Println("failed to connect to database")
 		os.Exit(1)
 	}
 	return
@@ -73,7 +73,7 @@ func userExists(db *sql.DB, userID int64) bool {
 	return err == nil
 }
 
-func addProduct(db *sql.DB, product Product) (productID int, err error) {
+func addProduct(db *sql.DB, product Product) (productID int64, err error) {
 	err = db.QueryRow(addProductQuery, product.UserID, product.ProductName, product.ProductDescription, pq.Array(product.ProductImages), product.ProductPrice).Scan(&productID)
 	if err != nil {
 		return 0, err

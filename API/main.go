@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -8,7 +9,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
+
+	"github.com/segmentio/kafka-go"
 )
 
 type api struct {
@@ -21,6 +25,7 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
+	log.Println("Connected to database")
 	a := api{db: db}
 
 	log.Println("Server listening on: http://127.0.0.1:8080")
@@ -44,10 +49,12 @@ func (a *api) AddProducts(w http.ResponseWriter, r *http.Request) {
 		}
 		var product Product
 		err = json.Unmarshal(body, &product)
+
 		if err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
+
 		if errs := a.basicProductChecks(product); errs != nil {
 			errorMessages := make([]string, len(errs))
 			for i, err := range errs {
@@ -56,18 +63,33 @@ func (a *api) AddProducts(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Invalid product: %s", errorMessages), http.StatusBadRequest)
 			return
 		}
+
 		if err != nil {
 			http.Error(w, "Unable to connect to database", http.StatusInternalServerError)
 			return
 		}
-		if _, err := addProduct(a.db, product); err != nil {
+		var productID int64
+		if productID, err = addProduct(a.db, product); err != nil {
 			http.Error(w, "Unable to add the product", http.StatusInternalServerError)
 			return
 		}
-		// return a response
+		log.Println("Product added successfully")
+		msg := struct {
+			UserID    int64 `json:"u"`
+			ProductID int64 `json:"p"`
+		}{UserID: product.UserID, ProductID: productID}
+		msgBytes, err := json.Marshal(msg)
+		if err != nil {
+			http.Error(w, "Unable to marshal message", http.StatusInternalServerError)
+			return
+		}
+
+		KProducer(msgBytes)
+		log.Println("Message sent to Kafka")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Product added successfully"))
 		return
+
 	default:
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
@@ -100,4 +122,25 @@ func validURLs(urls []string) bool {
 		}
 	}
 	return true
+}
+
+func KConfig() *kafka.Conn {
+	topic := os.Getenv("KAFKA_TOPIC")
+	brokers := os.Getenv("KAFKA_BROKERS")
+	if brokers == "" || topic == "" {
+		brokers = "localhost:9092"
+	}
+	conn, err := kafka.DialLeader(context.Background(), "tcp", brokers, topic, 0)
+	if err != nil {
+		log.Println(err)
+	}
+	return conn
+}
+
+func KProducer(value []byte) {
+	conn := KConfig()
+	defer conn.Close()
+	if _, err := conn.WriteMessages(kafka.Message{Value: value}); err != nil {
+		log.Println(err)
+	}
 }
