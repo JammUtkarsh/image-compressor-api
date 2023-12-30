@@ -45,9 +45,9 @@ const (
 	addProductQuery   = "INSERT INTO Products (user_id, product_name, product_description, product_images, product_price) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 )
 
-// The Connect function establishes a connection to a PostgreSQL database and retries up to 5 times if
+// The ConnectDB function establishes a connection to a PostgreSQL database and retries up to 5 times if
 // the initial connection fails.
-func Connect() (db *sql.DB, err error) {
+func ConnectDB() (db *sql.DB, err error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
@@ -68,12 +68,12 @@ func Connect() (db *sql.DB, err error) {
 	return
 }
 
-func userExists(db *sql.DB, userID int64) bool {
+func UserExists(db *sql.DB, userID int64) bool {
 	_, err := db.Exec(FindUserByIDQuery, userID)
 	return err == nil
 }
 
-func addProduct(db *sql.DB, product Product) (productID int64, err error) {
+func AddProduct(db *sql.DB, product Product) (productID int64, err error) {
 	err = db.QueryRow(addProductQuery, product.UserID, product.ProductName, product.ProductDescription, pq.Array(product.ProductImages), product.ProductPrice).Scan(&productID)
 	if err != nil {
 		return 0, err

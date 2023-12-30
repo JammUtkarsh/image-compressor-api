@@ -46,7 +46,7 @@ func Test_addProduct(t *testing.T) {
 			mock.ExpectQuery(regexp.QuoteMeta(addProductQuery)).
 				WithArgs(tt.product.UserID, tt.product.ProductName, tt.product.ProductDescription, pq.Array(tt.product.ProductImages), tt.product.ProductPrice).
 				WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(tt.wantProductID))
-			if _, err := addProduct(db, tt.product); err != nil {
+			if _, err := AddProduct(db, tt.product); err != nil {
 				t.Errorf("error was not expected while updating stats: %s", err)
 			}
 			if err := mock.ExpectationsWereMet(); err != nil {
@@ -82,7 +82,7 @@ func Test_userExists(t *testing.T) {
 			mock.ExpectExec(regexp.QuoteMeta(FindUserByIDQuery)).
 				WithArgs(tt.userID).
 				WillReturnResult(sqlmock.NewResult(tt.userID, 1))
-			if got := userExists(db, tt.userID); got != tt.want {
+			if got := UserExists(db, tt.userID); got != tt.want {
 				t.Errorf("userExists() = %v, want %v", got, tt.want)
 			}
 

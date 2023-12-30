@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -9,10 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
-
-	"github.com/segmentio/kafka-go"
 )
 
 type api struct {
@@ -20,7 +16,7 @@ type api struct {
 }
 
 func main() {
-	db, err := Connect()
+	db, err := ConnectDB()
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +65,7 @@ func (a *api) AddProducts(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var productID int64
-		if productID, err = addProduct(a.db, product); err != nil {
+		if productID, err = AddProduct(a.db, product); err != nil {
 			http.Error(w, "Unable to add the product", http.StatusInternalServerError)
 			return
 		}
@@ -98,7 +94,7 @@ func (a *api) AddProducts(w http.ResponseWriter, r *http.Request) {
 
 func (a *api) basicProductChecks(product Product) (validationErrors []error) {
 	switch {
-	case !userExists(a.db, product.UserID) || product.UserID == 0:
+	case !UserExists(a.db, product.UserID) || product.UserID == 0:
 		validationErrors = append(validationErrors, fmt.Errorf("user %d does not exist", product.UserID))
 	case product.ProductName == "":
 		validationErrors = append(validationErrors, errors.New("product name cannot be empty"))
@@ -122,25 +118,4 @@ func validURLs(urls []string) bool {
 		}
 	}
 	return true
-}
-
-func KConfig() *kafka.Conn {
-	topic := os.Getenv("KAFKA_TOPIC")
-	brokers := os.Getenv("KAFKA_BROKERS")
-	if brokers == "" || topic == "" {
-		brokers = "localhost:9092"
-	}
-	conn, err := kafka.DialLeader(context.Background(), "tcp", brokers, topic, 0)
-	if err != nil {
-		log.Println(err)
-	}
-	return conn
-}
-
-func KProducer(value []byte) {
-	conn := KConfig()
-	defer conn.Close()
-	if _, err := conn.WriteMessages(kafka.Message{Value: value}); err != nil {
-		log.Println(err)
-	}
 }

@@ -55,7 +55,7 @@ func Test_validImageURL(t *testing.T) {
 }
 
 func TestAddProducts(t *testing.T) {
-	db, err := Connect()
+	db, err := ConnectDB()
 	if err != nil {
 		t.Fatal(err)
 	}
