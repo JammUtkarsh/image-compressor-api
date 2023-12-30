@@ -12,33 +12,36 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func KConfig() kafka.ReaderConfig {
+func KConfig() *kafka.Conn {
 	topic := os.Getenv("KAFKA_TOPIC")
-	broker := os.Getenv("KAFKA_BROKERS")
-	return kafka.ReaderConfig{
-		Brokers:  []string{broker},
-		GroupID:  "g1",
-		Topic:    topic,
-		MinBytes: 10e3,
-		MaxBytes: 10e6,
+	brokers := os.Getenv("KAFKA_BROKERS")
+	if brokers == "" || topic == "" {
+		brokers = "localhost:9092"
 	}
+	conn, err := kafka.DialLeader(context.Background(), "tcp", brokers, topic, 0)
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println("Kafka Connection Established")
+	return conn
 }
 
 func KConsumer(db *sql.DB) {
-	r := kafka.NewReader(KConfig())
-	log.Println("Kafka Reader Initialized")
+	conn := KConfig()
+	defer conn.Close()
+
 	for {
-		m, err := r.ReadMessage(context.Background())
+		msg, err := conn.ReadMessage(10e6)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			break
 		}
-		if m.Value != nil {
-			userID, productID := MsgUnarshal(m.Value)
+
+		if msg.Value != nil {
+			userID, productID := MsgUnarshal(msg.Value)
 			WriteToDisk(db, userID, productID)
 		}
 	}
-	r.Close()
 }
 
 func MsgUnarshal(kMsg []byte) (userID, productID int) {
@@ -64,8 +67,8 @@ func WriteToDisk(db *sql.DB, userID, productID int) {
 		if err := img.ImgURLToBuffer(url); err != nil {
 			log.Println(err)
 		}
-		
-		if err:=img.ImgCompress(80, bimg.JPEG); err != nil {
+
+		if err := img.ImgCompress(80, bimg.JPEG); err != nil {
 			log.Println(err)
 		}
 		img.Name = fmt.Sprintf("%d_%d_%s", userID, productID, img.Name)
