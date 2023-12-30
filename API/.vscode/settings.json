@@ -1,0 +1,4 @@
+{
+	// To see test coverage, the the value with your absolute path to the .env file
+	"go.testEnvFile": "/Users/code/code/zocket-SDE/.env"
+}
