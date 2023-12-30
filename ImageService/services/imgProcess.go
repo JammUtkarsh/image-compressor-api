@@ -47,7 +47,6 @@ func (img *Image) ImgCompress(imgQuality int, imgType bimg.ImageType) (err error
 // This function take a byte array and saves it to a file in the given directory.
 func (img *Image) SaveFile(directory string) (err error) {
 	fPath := filepath.Join(directory, img.Name)
-	fPath = filepath.Clean(fPath)
 	if _, err = os.Stat(directory); os.IsNotExist(err) {
 		if err = os.MkdirAll(directory, 0755); err != nil {
 			return err
