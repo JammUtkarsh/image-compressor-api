@@ -1,5 +1,39 @@
 version: "3.8"
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api-final
+    depends_on:
+      - db
+      - kafka
+    restart: always
+    environment:
+      POSTGRES_HOST: db
+      KAFKA_BROKERS: kafka
+    env_file:
+      - .env
+    ports:
+      - 8080:8080
+
+  img:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: img-final
+    restart: always
+    depends_on:
+      - db
+      - kafka
+    environment:
+      POSTGRES_HOST: db
+      KAFKA_BROKERS: kafka
+    env_file:
+      - .env
+    volumes:
+      - ./compressed:/compressed
+
   db:
     image: postgres:latest
     restart: always
@@ -11,29 +45,6 @@ services:
     ports:
       - 5432:5432
 
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: api-final
-    depends_on:
-      - db
-    restart: always
-    env_file:
-      - .env
-    environment:
-      POSTGRES_HOST: db
-    ports:
-      - 8080:8080
-
-  img:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: img-final
-    restart: always
-    ports:
-      - 7070:7070
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     environment:
@@ -41,13 +52,13 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - 22181:2181
-  
+
   kafka:
     image: confluentinc/cp-kafka:latest
     depends_on:
       - zookeeper
     ports:
-      - 29092:29092
+      - 9092:9092
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
