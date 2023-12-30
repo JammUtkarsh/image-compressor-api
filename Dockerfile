@@ -12,8 +12,7 @@ EXPOSE 8080
 
 
 # Original File: https://github.com/cshum/imagor/blob/master/Dockerfile
-ARG GOLANG_VERSION=1.21
-FROM golang:${GOLANG_VERSION}-bookworm as img-final
+FROM golang:1.21-bookworm as img-final
 
 ARG VIPS_VERSION=8.14.5
 ARG TARGETARCH
