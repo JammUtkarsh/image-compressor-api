@@ -1,4 +1,4 @@
-package imageservice
+package services
 
 import (
 	"database/sql"
@@ -23,11 +23,11 @@ var (
 	dbname   = os.Getenv("POSTGRES_DB")
 )
 
-// func init() {
-// 	if host == "" || user == "" || password == "" || dbname == "" {
-// 		log.Fatalln("Please set the postgres enviroment variables")
-// 	}
-// }
+func init() {
+	if host == "" || user == "" || password == "" || dbname == "" {
+		log.Fatalln("Please set the postgres enviroment variables")
+	}
+}
 
 func Connect() (db *sql.DB, err error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
