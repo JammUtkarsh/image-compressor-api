@@ -45,7 +45,7 @@ func KConsumer(db *sql.DB) {
 
 		if msg.Value != nil {
 			userID, productID := MsgUnarshal(msg.Value)
-			urls, err := GetImgArray(db, userID, productID)
+			urls, err := GetImgArray(db, productID, userID)
 			if err != nil {
 				log.Println(err)
 			}

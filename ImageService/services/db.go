@@ -50,12 +50,12 @@ func Connect() (db *sql.DB, err error) {
 	return
 }
 
-func GetImgArray(db *sql.DB, id int, userID int) (imageArray []string, err error) {
-	err = db.QueryRow(GetImageArrayQuery, id, userID).Scan(pq.Array(&imageArray))
+func GetImgArray(db *sql.DB, productID int, userID int) (imageArray []string, err error) {
+	err = db.QueryRow(GetImageArrayQuery, productID, userID).Scan(pq.Array(&imageArray))
 	return
 }
 
-func AddCompImg(db *sql.DB, id int, userID int, compImage []string) (err error) {
-	_, err = db.Exec(AddCompImageQuery, pq.Array(compImage), id, userID)
+func AddCompImg(db *sql.DB, productID int, userID int, compImage []string) (err error) {
+	_, err = db.Exec(AddCompImageQuery, pq.Array(compImage), productID, userID)
 	return
 }
